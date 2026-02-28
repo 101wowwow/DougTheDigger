@@ -1,5 +1,11 @@
+# node stuff
+node_modules/
+
+
+#
+
 # Windows
- 
+
 # Windows thumbnail cache files
 Thumbs.db
 Thumbs.db:encryptable
