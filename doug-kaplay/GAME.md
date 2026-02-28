@@ -1,7 +1,10 @@
-Beneath the surface
+
+
+
+Theme: Beneath the surface
+
 
 The outside world has been assumed to be in a nuclear fallout for years. As such civization has to be under the surface, hidden for ages.
-
 This is a rogue like type game.
 
 First:
