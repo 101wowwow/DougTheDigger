@@ -49,7 +49,7 @@ k.scene("home", () => {
 		k.text("", { size: 16, width: 500 }),
 		k.pos(k.center().x, k.center().y),
 		k.anchor("center"),
-		k.color(200, 200, 200),
+		k.color(255, 255, 255),
 		scrollingText(k, {
 			text: "You are Doug, The Digger. \nA mole, Beneath The Surface, The Underground. \nNaturally, you seek the Surface, as your ancestors have done for eons. \nUnfortunately for you, there was a disaster ages ago that has left the path to the surface leaden with perils - and it is unknown if the wonderful Surface still exists how folklore told it... \nYour task, battle your way to the surface. \nEnter to start. Arrow keys for navigation, space to attack",
 			speed: 40,
