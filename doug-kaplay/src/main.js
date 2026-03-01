@@ -16,6 +16,7 @@ k.loadRoot("./");
 k.loadSprite("bean", "sprites/bean.png");
 k.loadSprite("spider", "sprites/spider.png");
 k.loadSprite("goofybigtext", "sprites/eviltextbadtest.png")
+k.loadSprite("doug", "sprites/doug.png")
 
 k.scene("home", () => {
 	k.camPos(k.center());
@@ -28,7 +29,7 @@ k.scene("home", () => {
 	]);
 
 	k.add([
-		k.text("You are Doug, The Digger. \nA mole, Beneath The Surface, The Underground. \nNaturally, you seek the Surface, as your ancestors have done for eons. \nUnfortunately for you, there was a disaster ages ago that has left the path to the surface leaden with perils - and it is unknown if the wonderful Surface still exists how folklore told it... \nYour task, battle your way to the surface. ", { size: 16, width: 500 }),
+		k.text("You are Doug, The Digger. \nA mole, Beneath The Surface, The Underground. \nNaturally, you seek the Surface, as your ancestors have done for eons. \nUnfortunately for you, there was a disaster ages ago that has left the path to the surface leaden with perils - and it is unknown if the wonderful Surface still exists how folklore told it... \nYour task, battle your way to the surface. \nEnter to start. Arrow keys for navigation, space to attack", { size: 16, width: 500 }),
 		k.pos(k.center().x, k.center().y),
 		k.anchor("center"),
 		k.color(200, 200, 200),
@@ -44,9 +45,28 @@ k.scene("home", () => {
 
 	btn.onClick(() => k.go("levelintro", 0));
 
-	k.onKeyPress("space", () => {
+	k.onKeyPress("enter", () => {
 		k.go("levelintro", 0);
 	});
+
+	// Debug level select
+	const debugLabel = k.add([
+		k.text("DEBUG: Jump to level", { size: 14 }),
+		k.pos(k.center().x, k.height() - 80),
+		k.anchor("center"),
+		k.color(150, 150, 150),
+	]);
+
+	for (let i = 0; i < LEVELS.length; i++) {
+		const lvlBtn = k.add([
+			k.text(`${i + 1}`, { size: 20 }),
+			k.pos(k.center().x - ((LEVELS.length - 1) * 20) + i * 40, k.height() - 50),
+			k.anchor("center"),
+			k.color(255, 200, 100),
+			k.area(),
+		]);
+		lvlBtn.onClick(() => k.go("levelintro", i));
+	}
 });
 
 k.scene("levelintro", (levelIdx) => {
@@ -70,13 +90,13 @@ k.scene("levelintro", (levelIdx) => {
 	}
 
 	k.add([
-		k.text("Press SPACE to begin", { size: 16 }),
+		k.text("Press ENTER to begin | SPACE to attack", { size: 16 }),
 		k.pos(k.center().x, k.center().y + 100),
 		k.anchor("center"),
 		k.color(150, 150, 150),
 	]);
 
-	k.onKeyPress("space", () => {
+	k.onKeyPress("enter", () => {
 		k.go("game", levelIdx);
 	});
 });
@@ -98,13 +118,13 @@ k.scene("game", (levelIdx) => {
 		}
 	}
 
-	const bean = k.add([
+	const doug = k.add([
 		k.pos(
 			playerStart.x * TILE_SIZE + TILE_SIZE / 2,
 			playerStart.y * TILE_SIZE + TILE_SIZE / 2,
 		),
-		k.sprite("bean"),
-		k.scale(0.28),
+		k.sprite("doug"),
+		k.scale(0.04),
 		k.anchor("center"),
 		k.area(),
 		player(k, grid, TILE_SIZE),
@@ -137,7 +157,7 @@ k.scene("game", (levelIdx) => {
 			k.anchor("center"),
 			k.area({ shape: new k.Rect(k.vec2(0), w, h) }),
 			k.color(type.tint[0], type.tint[1], type.tint[2]),
-			enemy(k, bean, grid, TILE_SIZE, type),
+			enemy(k, doug, grid, TILE_SIZE, type),
 			"enemy",
 		]);
 	}
@@ -151,12 +171,12 @@ k.scene("game", (levelIdx) => {
 		k.z(100),
 	]);
 
-	bean.onUpdate(() => {
-		k.camPos(bean.pos);
+	doug.onUpdate(() => {
+		k.camPos(doug.pos);
 	});
 
 	k.onKeyPress("space", () => {
-		bean.attack();
+		doug.attack();
 	});
 
 	// Check if all enemies are dead → advance or win
@@ -173,7 +193,7 @@ k.scene("game", (levelIdx) => {
 		}
 	});
 
-	bean.on("death", () => {
+	doug.on("death", () => {
 		k.go("gameover");
 	});
 });
@@ -211,13 +231,13 @@ k.scene("gameover", () => {
 	]);
 
 	k.add([
-		k.text("Press SPACE to try again", { size: 20 }),
+		k.text("Press ENTER to try again", { size: 20 }),
 		k.pos(k.center().x, k.center().y + 30),
 		k.anchor("center"),
 		k.color(255, 50, 50),
 	]);
 
-	k.onKeyPress("space", () => {
+	k.onKeyPress("enter", () => {
 		k.go("levelintro", 0);
 	});
 });

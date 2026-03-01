@@ -130,7 +130,16 @@ export default function generateMap(cols, rows) {
 		}
 	}
 
-	return { grid, rooms, playerStart: { x: rooms[0].cx, y: rooms[0].cy } };
+	// Start at the room closest to the bottom-center (climbing to the surface)
+	const midX = Math.floor(cols / 2);
+	let bestRoom = rooms[0];
+	let bestScore = Infinity;
+	for (const r of rooms) {
+		const score = Math.abs(r.cx - midX) - r.cy; // prefer bottom (high cy) and center
+		if (score < bestScore) { bestScore = score; bestRoom = r; }
+	}
+
+	return { grid, rooms, playerStart: { x: bestRoom.cx, y: bestRoom.cy } };
 }
 
 function carveEllipse(grid, cx, cy, rx, ry, rows, cols) {

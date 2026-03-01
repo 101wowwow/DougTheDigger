@@ -49,10 +49,10 @@ export const ENEMY_TYPES = {
         attackDamage: 10,
         attackCooldown: 0.5,
         sprite: "spider",
-        spriteScale: 0.28,
+        spriteScale: 0.15,
         tint: [255, 255, 255],
-        width: 10,
-        height: 16,
+        width: 5,
+        height: 5,
     },
 
     // issues

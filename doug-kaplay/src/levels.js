@@ -8,7 +8,7 @@ const LEVELS = [
 		name: "Level 1",
 		description: "Level 1. You battle Red Enemies(RELACES THIS AAA). Slow, but medium strength.",
 		enemies: [
-			{ type: ENEMY_TYPES.red, count: 3 },
+			{ type: ENEMY_TYPES.red, count: 4 },
 			
 		],
 	},
@@ -16,7 +16,7 @@ const LEVELS = [
 		name: "Level 2",
 		description: "spider enemies are fast - beware",
 		enemies: [
-			{ type: ENEMY_TYPES.red, count: 1 },
+			{ type: ENEMY_TYPES.red, count: 2 },
 			// { type: ENEMY_TYPES.black, count: 3 },
 			{ type: ENEMY_TYPES.spider, count: 3 },
 			
