@@ -13,6 +13,7 @@ const ENEMY_DEFAULTS = {
 	phaseThrough: false, // a bug into a feature nope
 	tint: [255, 0, 0],
 	sprite: "bean",
+	spriteScale: 0.28,
 	width: 16,
 	height: 16,
 };
@@ -48,9 +49,11 @@ export const ENEMY_TYPES = {
         attackDamage: 10,
         attackCooldown: 0.5,
         sprite: "spider",
+        spriteScale: 0.28,
+        tint: [255, 255, 255],
         width: 10,
-        height: 16:
-    }
+        height: 16,
+    },
 
     // issues
     // soldier: {

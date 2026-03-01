@@ -125,9 +125,7 @@ k.scene("game", (levelIdx) => {
 		const spriteName = type.sprite || "bean";
 		const w = type.width || 16;
 		const h = type.height || 16;
-		const spriteData = k.getSprite(spriteName);
-		const texW = spriteData ? spriteData.data.tex.width : 64;
-		const texH = spriteData ? spriteData.data.tex.height : 64;
+		const sc = type.spriteScale || 0.28;
 
 		k.add([
 			k.pos(
@@ -135,7 +133,7 @@ k.scene("game", (levelIdx) => {
 				room.cy * TILE_SIZE + TILE_SIZE / 2,
 			),
 			k.sprite(spriteName),
-			k.scale(w / texW, h / texH),
+			k.scale(sc),
 			k.anchor("center"),
 			k.area({ shape: new k.Rect(k.vec2(0), w, h) }),
 			k.color(type.tint[0], type.tint[1], type.tint[2]),
