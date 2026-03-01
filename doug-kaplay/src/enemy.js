@@ -48,7 +48,8 @@ export const ENEMY_TYPES = {
         attackDamage: 10,
         attackCooldown: 0.5,
         sprite: "spider",
-        
+        width: 10,
+        height: 16:
     }
 
     // issues

@@ -9,22 +9,26 @@ const LEVELS = [
 		description: "Level 1. You battle Red Enemies(RELACES THIS AAA). Slow, but medium strength.",
 		enemies: [
 			{ type: ENEMY_TYPES.red, count: 3 },
+			
 		],
 	},
 	{
 		name: "Level 2",
-		description: "Black enemies are fast - beware",
+		description: "spider enemies are fast - beware",
 		enemies: [
 			{ type: ENEMY_TYPES.red, count: 1 },
-			{ type: ENEMY_TYPES.black, count: 3 },
+			// { type: ENEMY_TYPES.black, count: 3 },
+			{ type: ENEMY_TYPES.spider, count: 3 },
+			
 		],
 	},
 	{
 		name: "Level 3",
-		description: "More enemies yadda yadda.",
+		description: "More enemies yadda yadda.... SPIDERS AAAAA",
 		enemies: [
 			{ type: ENEMY_TYPES.red, count: 2 },
-			{ type: ENEMY_TYPES.black, count: 3 },
+			// { type: ENEMY_TYPES.black, count: 2 },
+			{ type: ENEMY_TYPES.spider, count: 3 },
 		],
 	},
 	{
@@ -32,7 +36,8 @@ const LEVELS = [
 		description: "more fnny stuff aaa",
 		enemies: [
 			{ type: ENEMY_TYPES.red, count: 4 },
-			{ type: ENEMY_TYPES.black, count: 4 },
+			// { type: ENEMY_TYPES.black, count: 4 },
+			{ type: ENEMY_TYPES.spider, count: 3 },
 		],
 	},
 	{
@@ -40,7 +45,8 @@ const LEVELS = [
 		description: "level 5 aaaaaafdsgfdsfa",
 		enemies: [
 			{ type: ENEMY_TYPES.red, count: 5 },
-			{ type: ENEMY_TYPES.black, count: 5 },
+			// { type: ENEMY_TYPES.black, count: 5 },
+			{ type: ENEMY_TYPES.spider, count: 5 },
 		],
 	},
 ];
