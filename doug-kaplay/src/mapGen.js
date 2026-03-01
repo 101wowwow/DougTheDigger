@@ -139,7 +139,21 @@ export default function generateMap(cols, rows) {
 		if (score < bestScore) { bestScore = score; bestRoom = r; }
 	}
 
-	return { grid, rooms, playerStart: { x: bestRoom.cx, y: bestRoom.cy } };
+	// Gateway at the room closest to the top-center (the surface!)
+	let gatewayRoom = rooms[0];
+	let gatewayScore = -Infinity;
+	for (const r of rooms) {
+		if (r === bestRoom) continue; // not the same room as the player
+		const score = -Math.abs(r.cx - midX) - r.cy; // prefer top (low cy) and center
+		if (score > gatewayScore) { gatewayScore = score; gatewayRoom = r; }
+	}
+
+	return {
+		grid,
+		rooms,
+		playerStart: { x: bestRoom.cx, y: bestRoom.cy },
+		gatewayStart: { x: gatewayRoom.cx, y: gatewayRoom.cy },
+	};
 }
 
 function carveEllipse(grid, cx, cy, rx, ry, rows, cols) {

@@ -95,9 +95,10 @@ function hasLineOfSight(grid, ax, ay, bx, by) {
 
 export const ENEMY_TYPES = {
     // yay todo add more enemies
-	black: {
-		name: "Shadow",
-		speed: 240,
+
+	phaser: {
+		name: "Phaser Drone",
+		speed: 300,
 		health: 15,
 		attackDamage: 8,
 		attackCooldown: 0.6,
@@ -110,26 +111,42 @@ export const ENEMY_TYPES = {
 		height: 14,
 	},
 	red: {
-		name: "Red",
-		speed: 100,
-		health: 60,
+		name: "Red Soldier",
+		speed: 120,
+		health: 55,
 		attackDamage: 15,
 		attackCooldown: 1.0,
 		phaseThrough: false,
 		smartPathing: true,
-		triggerRadius: 300,
+		triggerRadius: 800,
 		tint: [255, 0, 0],
 		sprite: "bean",
 		width: 16,
 		height: 16,
 	},
 
+	coward:{
+		name: "Cowardly (Dumb) Soldier",
+		speed: 120,
+		health: 55,
+		attackDamage: 15,
+		attackCooldown: 1.0,
+		phaseThrough: false,
+		smartPathing: false,
+		triggerRadius: 100,
+		tint: [243, 176, 74],
+		sprite: "bean",
+		width: 16,
+		height: 16,
+	},
+	
+
     spider: {
-        name: "Spider",
+        name: "Steampunk Spider",
         speed: 200,
-        health: 30,
+        health: 90,
         attackDamage: 10,
-        attackCooldown: 0.5,
+        attackCooldown: 0.4,
         smartPathing: true,
         triggerRadius: Infinity,
         sprite: "spider",
@@ -138,6 +155,22 @@ export const ENEMY_TYPES = {
         width: 5,
         height: 5,
     },
+
+	spiderNoHunt: {
+        name: "Steampunk Spider(No Hunt)",
+        speed: 200,
+        health: 90,
+        attackDamage: 10,
+        attackCooldown: 0.4,
+        smartPathing: true,
+        triggerRadius: 300,
+        sprite: "spider",
+        spriteScale: 0.15,
+        tint: [255, 255, 255],
+        width: 5,
+        height: 5,
+    },
+
 
     // issues
     // soldier: {

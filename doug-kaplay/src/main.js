@@ -31,6 +31,19 @@ k.scene("home", () => {
 		k.anchor("center"),
 		k.color(255, 220, 150),
 	]);
+	const DougDemo = k.add([
+		k.pos(k.center().x - 120, k.center().y + 20),
+		k.sprite("doug"),
+		k.scale(0.30),
+		k.anchor("center"),
+	]);
+
+	const SpiderDemo = k.add([
+		k.pos(k.center().x + 120, k.center().y + 20),
+		k.sprite("spider"),
+		k.scale(1),
+		k.anchor("center"),
+	]);
 
 	const storyText = k.add([
 		k.text("", { size: 16, width: 500 }),
@@ -115,7 +128,7 @@ k.scene("levelintro", (levelIdx) => {
 
 k.scene("game", (levelIdx) => {
 	const levelDef = LEVELS[levelIdx];
-	const { grid, rooms, playerStart } = generateMap(MAP_COLS, MAP_ROWS);
+	const { grid, rooms, playerStart, gatewayStart } = generateMap(MAP_COLS, MAP_ROWS);
 
 	// Pre-render all walls into a single background image for performance
 	const wallCanvas = document.createElement("canvas");
@@ -195,7 +208,16 @@ k.scene("game", (levelIdx) => {
 		}
 	}
 
-	const availableRooms = rooms.slice(1);
+	const playerPx = k.vec2(
+		playerStart.x * TILE_SIZE + TILE_SIZE / 2,
+		playerStart.y * TILE_SIZE + TILE_SIZE / 2,
+	);
+	const MIN_SPAWN_DIST = 100;
+	const availableRooms = rooms.slice(1).filter((r) => {
+		const rx = r.cx * TILE_SIZE + TILE_SIZE / 2;
+		const ry = r.cy * TILE_SIZE + TILE_SIZE / 2;
+		return playerPx.dist(k.vec2(rx, ry)) >= MIN_SPAWN_DIST;
+	});
 	for (let i = 0; i < enemiesToSpawn.length; i++) {
 		const room = availableRooms[i % availableRooms.length];
 		const type = enemiesToSpawn[i];
@@ -246,17 +268,52 @@ k.scene("game", (levelIdx) => {
 		doug.attack();
 	});
 
-	// Check if all enemies are dead → advance or win
-	let levelCleared = false;
+	// Gateway — starts gray, turns purple when all enemies are killed
+	const GATEWAY_W = 40;
+	const GATEWAY_H = 24;
+	const gateway = k.add([
+		k.pos(
+			gatewayStart.x * TILE_SIZE + TILE_SIZE / 2,
+			gatewayStart.y * TILE_SIZE + TILE_SIZE / 2,
+		),
+		k.rect(GATEWAY_W, GATEWAY_H),
+		k.anchor("center"),
+		k.area(),
+		k.color(120, 120, 120),
+		k.z(5),
+		"gateway",
+	]);
+	const gatewayLabel = k.add([
+		k.text("Gateway", { size: 10 }),
+		k.pos(
+			gatewayStart.x * TILE_SIZE + TILE_SIZE / 2,
+			gatewayStart.y * TILE_SIZE + TILE_SIZE / 2,
+		),
+		k.anchor("center"),
+		k.color(255, 255, 255),
+		k.z(6),
+	]);
+
+	let gatewayActive = false;
+
+	// Check if all enemies are dead → activate the gateway
 	k.onUpdate(() => {
-		if (levelCleared) return;
+		if (gatewayActive) return;
 		if (k.get("enemy").length === 0) {
-			levelCleared = true;
-			if (levelIdx + 1 < LEVELS.length) {
-				k.go("levelintro", levelIdx + 1);
-			} else {
-				k.go("win");
-			}
+			gatewayActive = true;
+			gateway.color = k.rgb(160, 0, 255);
+			gatewayLabel.color = k.rgb(255, 255, 255);
+			notifs.show("Gateway activated! Find the Gateway!", [160, 0, 255]);
+		}
+	});
+
+	// Touch the active gateway → advance
+	doug.onCollide("gateway", () => {
+		if (!gatewayActive) return;
+		if (levelIdx + 1 < LEVELS.length) {
+			k.go("levelintro", levelIdx + 1);
+		} else {
+			k.go("win");
 		}
 	});
 
