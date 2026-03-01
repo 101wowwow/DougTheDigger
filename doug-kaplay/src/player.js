@@ -1,6 +1,6 @@
 import { WALL } from "./mapGen.js";
 
-const SPEED = 150;
+const SPEED = 220;
 const MAX_HEALTH = 100;
 const COLLISION_HALF = 8; // half-size of the player's collision box (16×16 px)
 const BAR_WIDTH = 30;

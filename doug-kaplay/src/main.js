@@ -361,7 +361,7 @@ k.scene("win", () => {
 		k.color(200, 200, 2),
 	]);
 
-	k.onKeyPress("B", () => {
+	k.onKeyPress("b", () => {
 		k.go("home");
 	});
 });
