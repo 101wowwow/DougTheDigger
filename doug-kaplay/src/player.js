@@ -2,7 +2,7 @@ import { WALL } from "./mapGen.js";
 
 const SPEED = 220;
 const MAX_HEALTH = 100;
-const ATTACK_COOLDOWN = 0.5; // seconds between attacks
+const ATTACK_COOLDOWN = 0.15; // seconds between attacks
 const COLLISION_HALF = 8; // half-size of the player's collision box (16×16 px)
 const BAR_WIDTH = 30;
 const BAR_HEIGHT = 4;
