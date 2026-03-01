@@ -201,7 +201,7 @@ k.scene("game", (levelIdx) => {
 	}
 
 	const trackerLabel = k.add([
-		k.text(getTrackerText(), { size: 14 }),
+		k.text(getTrackerText(), { size: 30 }),
 		k.pos(k.width() - 10, 10),
 		k.anchor("topright"),
 		k.color(200, 200, 200),
@@ -481,7 +481,7 @@ k.scene("game", (levelIdx) => {
 
 	// Level label
 	const levelLabel = k.add([
-		k.text(levelDef.name, { size: 16 }),
+		k.text(levelDef.name, { size: 30 }),
 		k.pos(10, 10),
 		k.color(255, 220, 150),
 		k.fixed(),
@@ -490,7 +490,7 @@ k.scene("game", (levelIdx) => {
 
 	// Gateway HUD label (hidden until activated)
 	const gatewayHud = k.add([
-		k.text("Gateway Activated", { size: 14 }),
+		k.text("Gateway Activated", { size: 30 }),
 		k.pos(10, 10),
 		k.anchor("topleft"),
 		k.color(160, 0, 255),
@@ -503,22 +503,22 @@ k.scene("game", (levelIdx) => {
 	const CD_BAR_W = 60;
 	const CD_BAR_H = 8;
 	const cdLabel = k.add([
-		k.text("ATK", { size: 12 }),
-		k.pos(10, k.height() - 26),
+		k.text("ATK", { size: 30 }),
+		k.pos(10, k.height() - 36),
 		k.color(200, 200, 200),
 		k.fixed(),
 		k.z(100),
 	]);
 	const cdBarBg = k.add([
 		k.rect(CD_BAR_W, CD_BAR_H),
-		k.pos(40, k.height() - 24),
+		k.pos(60, k.height() - 24),
 		k.color(60, 60, 60),
 		k.fixed(),
 		k.z(100),
 	]);
 	const cdBar = k.add([
 		k.rect(CD_BAR_W, CD_BAR_H),
-		k.pos(40, k.height() - 24),
+		k.pos(60, k.height() - 24),
 		k.color(100, 255, 100),
 		k.fixed(),
 		k.z(101),
@@ -553,7 +553,7 @@ k.scene("game", (levelIdx) => {
 		"gateway",
 	]);
 	const gatewayLabel = k.add([
-		k.text("Gateway", { size: 10 }),
+		k.text("Gateway", { size: 30 }),
 		k.pos(
 			gatewayStart.x * TILE_SIZE + TILE_SIZE / 2,
 			gatewayStart.y * TILE_SIZE + TILE_SIZE / 2,

@@ -11,7 +11,7 @@ export default function createNotifications(k) {
 		const y = START_Y + active.length * SPACING;
 
 		const obj = k.add([
-			k.text(msg, { size: 12 }),
+			k.text(msg, { size: 30 }),
 			k.pos(LEFT_MARGIN, y),
 			k.color(color[0], color[1], color[2]),
 			k.opacity(1),
