@@ -1,23 +1,56 @@
 import kaplay from "kaplay";
 import player from "./player.js";
-import enemy, { ENEMY_TYPES } from "./enemy.js";
+import enemy from "./enemy.js";
 import generateMap, { WALL } from "./mapGen.js";
+import LEVELS from "./levels.js";
 
 const TILE_SIZE = 32;
 const MAP_COLS = 60;
 const MAP_ROWS = 45;
 
 const k = kaplay({
-	background: [85, 65, 45], // lighter brown — visible floor color
+	background: [85, 65, 45],
 });
 
 k.loadRoot("./");
 k.loadSprite("bean", "sprites/bean.png");
 
-k.scene("game", () => {
+k.scene("home", () => {
+	k.camPos(k.center());
+
+	k.add([
+		k.text("DOUG THE DIGGER", { size: 48 }),
+		k.pos(k.center().x, k.center().y - 100),
+		k.anchor("center"),
+		k.color(255, 220, 150),
+	]);
+
+	k.add([
+		k.text("You are Doug, The Digger. \nA mole, Beneath The Surface, The Underground. \nNaturally, you seek the Surface, as your ancestors have done for eons. \nUnfortunately for you, there was a disaster ages ago that has left the path to the surface leaden with perils - and it is unknown if the wonderful Surface still exists how folklore told it... \nYour task, battle your way to the surface. ", { size: 16, width: 500 }),
+		k.pos(k.center().x, k.center().y),
+		k.anchor("center"),
+		k.color(200, 200, 200),
+	]);
+
+	const btn = k.add([
+		k.text("START", { size: 32 }),
+		k.pos(k.center().x, k.center().y + 100),
+		k.anchor("center"),
+		k.color(100, 255, 100),
+		k.area(),
+	]);
+
+	btn.onClick(() => k.go("game", 0));
+
+	k.onKeyPress("space", () => {
+		k.go("game", 0);
+	});
+});
+
+k.scene("game", (levelIdx) => {
+	const levelDef = LEVELS[levelIdx];
 	const { grid, rooms, playerStart } = generateMap(MAP_COLS, MAP_ROWS);
 
-	// Render wall tiles as dark brown rectangles (darker than the floor background)
 	for (let y = 0; y < MAP_ROWS; y++) {
 		for (let x = 0; x < MAP_COLS; x++) {
 			if (grid[y][x] === WALL) {
@@ -31,7 +64,6 @@ k.scene("game", () => {
 		}
 	}
 
-	// Player spawns at the center of the first room
 	const bean = k.add([
 		k.pos(
 			playerStart.x * TILE_SIZE + TILE_SIZE / 2,
@@ -44,18 +76,22 @@ k.scene("game", () => {
 		player(k, grid, TILE_SIZE),
 	]);
 
-	// One enemy per room (skip room 0 — that's the player's starting room)
-	for (let i = 1; i < rooms.length; i++) {
-		const room = rooms[i];
-		const cx = room.cx;
-		const cy = room.cy;
+	const enemiesToSpawn = [];
+	for (const entry of levelDef.enemies) {
+		for (let n = 0; n < entry.count; n++) {
+			enemiesToSpawn.push(entry.type);
+		}
+	}
 
-		const type = i % 2 === 0 ? ENEMY_TYPES.black : ENEMY_TYPES.red;
+	const availableRooms = rooms.slice(1);
+	for (let i = 0; i < enemiesToSpawn.length; i++) {
+		const room = availableRooms[i % availableRooms.length];
+		const type = enemiesToSpawn[i];
 
 		k.add([
 			k.pos(
-				cx * TILE_SIZE + TILE_SIZE / 2,
-				cy * TILE_SIZE + TILE_SIZE / 2,
+				room.cx * TILE_SIZE + TILE_SIZE / 2,
+				room.cy * TILE_SIZE + TILE_SIZE / 2,
 			),
 			k.sprite("bean"),
 			k.scale(0.28),
@@ -63,10 +99,19 @@ k.scene("game", () => {
 			k.area(),
 			k.color(type.tint[0], type.tint[1], type.tint[2]),
 			enemy(k, bean, grid, TILE_SIZE, type),
+			"enemy",
 		]);
 	}
 
-	// Camera follows the player every frame
+	// Level label
+	k.add([
+		k.text(levelDef.name, { size: 16 }),
+		k.pos(10, 10),
+		k.color(255, 220, 150),
+		k.fixed(),
+		k.z(100),
+	]);
+
 	bean.onUpdate(() => {
 		k.camPos(bean.pos);
 	});
@@ -75,13 +120,49 @@ k.scene("game", () => {
 		bean.attack();
 	});
 
+	// Check if all enemies are dead → advance or win
+	let levelCleared = false;
+	k.onUpdate(() => {
+		if (levelCleared) return;
+		if (k.get("enemy").length === 0) {
+			levelCleared = true;
+			if (levelIdx + 1 < LEVELS.length) {
+				k.go("game", levelIdx + 1);
+			} else {
+				k.go("win");
+			}
+		}
+	});
+
 	bean.on("death", () => {
 		k.go("gameover");
 	});
 });
 
+k.scene("win", () => {
+	k.camPos(k.center());
+
+	k.add([
+		k.text("YOU WIN!", { size: 48 }),
+		k.pos(k.center().x, k.center().y - 40),
+		k.anchor("center"),
+		k.color(100, 255, 100),
+	]);
+
+	k.add([
+		k.text("Press B to re-begin the game...", { size: 20 }),
+		k.pos(k.center().x, k.center().y + 30),
+		k.anchor("center"),
+		k.color(200, 200, 2),
+	]);
+
+	k.onKeyPress("B", () => {
+		k.go("home");
+	});
+});
+
 k.scene("gameover", () => {
-	k.camPos(k.center()); // reset camera so text is centered on screen
+	k.camPos(k.center());
 
 	k.add([
 		k.text("GAME OVER", { size: 48 }),
@@ -91,15 +172,15 @@ k.scene("gameover", () => {
 	]);
 
 	k.add([
-		k.text("Press SPACE to restart", { size: 20 }),
+		k.text("Press SPACE to try again", { size: 20 }),
 		k.pos(k.center().x, k.center().y + 30),
 		k.anchor("center"),
 		k.color(255, 50, 50),
 	]);
 
 	k.onKeyPress("space", () => {
-		k.go("game");
+		k.go("game", 0);
 	});
 });
 
-k.go("game");
+k.go("home");
