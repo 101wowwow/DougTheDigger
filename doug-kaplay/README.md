@@ -1,3 +1,9 @@
+
+Credit: 
+Spider.png: Alex Ren
+
+Thank you alex for steampunk spider!
+
 # Folder structure
 
 - `src` - source code for your kaplay project

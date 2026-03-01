@@ -1,6 +1,6 @@
 import kaplay from "kaplay";
 import player from "./player.js";
-import enemy from "./enemy.js";
+import enemy, { ENEMY_TYPES } from "./enemy.js";
 import generateMap, { WALL } from "./mapGen.js";
 import LEVELS from "./levels.js";
 
@@ -14,6 +14,8 @@ const k = kaplay({
 
 k.loadRoot("./");
 k.loadSprite("bean", "sprites/bean.png");
+k.loadSprite("spider", "sprites/spider.png");
+k.loadSprite("goofybigtext", "sprites/eviltextbadtest.png")
 
 k.scene("home", () => {
 	k.camPos(k.center());
@@ -120,15 +122,19 @@ k.scene("game", (levelIdx) => {
 		const room = availableRooms[i % availableRooms.length];
 		const type = enemiesToSpawn[i];
 
+		const spriteName = type.sprite || "bean";
+		const w = type.width || 16;
+		const h = type.height || 16;
+
 		k.add([
 			k.pos(
 				room.cx * TILE_SIZE + TILE_SIZE / 2,
 				room.cy * TILE_SIZE + TILE_SIZE / 2,
 			),
-			k.sprite("bean"),
-			k.scale(0.28),
+			k.sprite(spriteName),
+			k.scale(w / 64, h / 64),
 			k.anchor("center"),
-			k.area(),
+			k.area({ shape: new k.Rect(k.vec2(0), w, h) }),
 			k.color(type.tint[0], type.tint[1], type.tint[2]),
 			enemy(k, bean, grid, TILE_SIZE, type),
 			"enemy",

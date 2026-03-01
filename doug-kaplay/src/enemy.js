@@ -12,6 +12,9 @@ const ENEMY_DEFAULTS = {
 	attackRange: 40,
 	phaseThrough: false, // a bug into a feature nope
 	tint: [255, 0, 0],
+	sprite: "bean",
+	width: 16,
+	height: 16,
 };
 
 export const ENEMY_TYPES = {
@@ -23,6 +26,9 @@ export const ENEMY_TYPES = {
 		attackCooldown: 0.6,
 		phaseThrough: true,
 		tint: [30, 30, 30],
+		sprite: "bean",
+		width: 14,
+		height: 14,
 	},
 	red: {
 		speed: 100,
@@ -31,7 +37,32 @@ export const ENEMY_TYPES = {
 		attackCooldown: 1.0,
 		phaseThrough: false,
 		tint: [255, 0, 0],
+		sprite: "bean",
+		width: 16,
+		height: 16,
 	},
+
+    spider: {
+        speed: 200,
+        health: 30,
+        attackDamage: 10,
+        attackCooldown: 0.5,
+        sprite: "spider",
+        
+    }
+
+    // issues
+    // soldier: {
+    //     speed: 100,
+	// 	health: 60,
+	// 	attackDamage: 15,
+	// 	attackCooldown: 1.0,
+	// 	phaseThrough: false,
+	// 	tint: [255, 0, 0],
+	// 	sprite: "bean",
+	// 	width: 18,
+	// 	height: 18,
+    // }
 };
 
 export default function enemy(k, target, grid, tileSize, opts = {}) {
