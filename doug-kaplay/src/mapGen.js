@@ -14,7 +14,7 @@
 export const WALL = 1;
 export const FLOOR = 0;
 
-const ROOM_PADDING = 4;
+const ROOM_PADDING = 8;
 
 export default function generateMap(cols, rows) {
 	const grid = [];
@@ -26,8 +26,8 @@ export default function generateMap(cols, rows) {
 
 	// Place small elliptical caverns — well spaced so tunnels between them are long
 	for (let attempt = 0; attempt < 50; attempt++) {
-		const rx = randInt(2, 4);
-		const ry = randInt(2, 3);
+		const rx = randInt(4, 8);
+		const ry = randInt(4, 6);
 		const cx = randInt(rx + 2, cols - rx - 2);
 		const cy = randInt(ry + 2, rows - ry - 2);
 
@@ -64,8 +64,8 @@ export default function generateMap(cols, rows) {
 	if (rooms.length === 0) {
 		const cx = Math.floor(cols / 2);
 		const cy = Math.floor(rows / 2);
-		rooms.push({ cx, cy, rx: 3, ry: 2 });
-		carveEllipse(grid, cx, cy, 3, 2, rows, cols);
+		rooms.push({ cx, cy, rx: 6, ry: 4 });
+		carveEllipse(grid, cx, cy, 6, 4, rows, cols);
 	}
 
 	// Sort so chain connects nearby rooms
@@ -102,7 +102,7 @@ export default function generateMap(cols, rows) {
 		if (floorTiles.length === 0) break;
 		const start = floorTiles[randInt(0, floorTiles.length)];
 		const angle = Math.random() * Math.PI * 2;
-		const dist = randInt(10, 22);
+		const dist = randInt(20, 44);
 		const tx = Math.max(2, Math.min(cols - 3, Math.round(start.x + Math.cos(angle) * dist)));
 		const ty = Math.max(2, Math.min(rows - 3, Math.round(start.y + Math.sin(angle) * dist)));
 		drunkWalk(grid, start.x, start.y, tx, ty, 0.4);
@@ -154,18 +154,18 @@ function carveEllipse(grid, cx, cy, rx, ry, rows, cols) {
 }
 
 // "Drunk walk" — wanders toward the target with random sidesteps.
-// Higher wander = windier tunnel. Always 1 tile wide, always connected.
+// Higher wander = windier tunnel. Carves a 2-tile-wide path so the player fits.
 function drunkWalk(grid, x, y, tx, ty, wander) {
 	const maxSteps = (Math.abs(tx - x) + Math.abs(ty - y)) * 5;
 	for (let step = 0; step < maxSteps && (x !== tx || y !== ty); step++) {
-		grid[y][x] = FLOOR;
+		carve2x2(grid, x, y);
 
 		if (Math.random() < wander) {
 			// Random cardinal step
 			const dir = Math.floor(Math.random() * 4);
 			const nx = x + [1, -1, 0, 0][dir];
 			const ny = y + [0, 0, 1, -1][dir];
-			if (nx >= 1 && nx < grid[0].length - 1 && ny >= 1 && ny < grid.length - 1) {
+			if (nx >= 1 && nx < grid[0].length - 2 && ny >= 1 && ny < grid.length - 2) {
 				x = nx;
 				y = ny;
 			}
@@ -180,7 +180,18 @@ function drunkWalk(grid, x, y, tx, ty, wander) {
 			}
 		}
 	}
-	grid[y][x] = FLOOR;
+	carve2x2(grid, x, y);
+}
+
+function carve2x2(grid, x, y) {
+	for (let dy = 0; dy <= 1; dy++) {
+		for (let dx = 0; dx <= 1; dx++) {
+			const ny = y + dy, nx = x + dx;
+			if (ny >= 1 && ny < grid.length - 1 && nx >= 1 && nx < grid[0].length - 1) {
+				grid[ny][nx] = FLOOR;
+			}
+		}
+	}
 }
 
 function randInt(min, max) {

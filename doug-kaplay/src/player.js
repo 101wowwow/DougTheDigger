@@ -42,6 +42,7 @@ export default function player(k, mapGrid, tileSize) {
 			if (isHit) return;
 
 			health -= amount;
+			this.trigger("damaged", amount);
 			isHit = true;
 			this.color = k.rgb(255, 0, 0);
 

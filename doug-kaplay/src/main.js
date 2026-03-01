@@ -3,16 +3,20 @@ import player from "./player.js";
 import enemy, { ENEMY_TYPES } from "./enemy.js";
 import generateMap, { WALL } from "./mapGen.js";
 import LEVELS from "./levels.js";
+import scrollingText from "./scrollingText.js";
+import createNotifications from "./notifications.js";
 
-const TILE_SIZE = 32;
-const MAP_COLS = 60;
-const MAP_ROWS = 45;
+const TILE_SIZE = 16;
+const MAP_COLS = 120;
+const MAP_ROWS = 90;
 
 const k = kaplay({
 	background: [85, 65, 45],
+	font: "scientifica", // yup thanks
 });
 
 k.loadRoot("./");
+k.loadFont("scientifica", "fonts/scientifica.ttf");
 k.loadSprite("bean", "sprites/bean.png");
 k.loadSprite("spider", "sprites/spider.png");
 k.loadSprite("goofybigtext", "sprites/eviltextbadtest.png")
@@ -23,16 +27,20 @@ k.scene("home", () => {
 
 	k.add([
 		k.text("DOUG THE DIGGER", { size: 48 }),
-		k.pos(k.center().x, k.center().y - 100),
+		k.pos(k.center().x, k.center().y - 120),
 		k.anchor("center"),
 		k.color(255, 220, 150),
 	]);
 
-	k.add([
-		k.text("You are Doug, The Digger. \nA mole, Beneath The Surface, The Underground. \nNaturally, you seek the Surface, as your ancestors have done for eons. \nUnfortunately for you, there was a disaster ages ago that has left the path to the surface leaden with perils - and it is unknown if the wonderful Surface still exists how folklore told it... \nYour task, battle your way to the surface. \nEnter to start. Arrow keys for navigation, space to attack", { size: 16, width: 500 }),
+	const storyText = k.add([
+		k.text("", { size: 16, width: 500 }),
 		k.pos(k.center().x, k.center().y),
 		k.anchor("center"),
 		k.color(200, 200, 200),
+		scrollingText(k, {
+			text: "You are Doug, The Digger. \nA mole, Beneath The Surface, The Underground. \nNaturally, you seek the Surface, as your ancestors have done for eons. \nUnfortunately for you, there was a disaster ages ago that has left the path to the surface leaden with perils - and it is unknown if the wonderful Surface still exists how folklore told it... \nYour task, battle your way to the surface. \nEnter to start. Arrow keys for navigation, space to attack",
+			speed: 40,
+		}),
 	]);
 
 	const btn = k.add([
@@ -82,10 +90,14 @@ k.scene("levelintro", (levelIdx) => {
 
 	if (levelDef.description) {
 		k.add([
-			k.text(levelDef.description, { size: 18, width: 500 }),
+			k.text("", { size: 18, width: 500 }),
 			k.pos(k.center().x, k.center().y + 10),
 			k.anchor("center"),
 			k.color(200, 200, 200),
+			scrollingText(k, {
+				text: levelDef.description,
+				speed: 35,
+			}),
 		]);
 	}
 
@@ -105,18 +117,31 @@ k.scene("game", (levelIdx) => {
 	const levelDef = LEVELS[levelIdx];
 	const { grid, rooms, playerStart } = generateMap(MAP_COLS, MAP_ROWS);
 
+	// Pre-render all walls into a single background image for performance
+	const wallCanvas = document.createElement("canvas");
+	wallCanvas.width = MAP_COLS * TILE_SIZE;
+	wallCanvas.height = MAP_ROWS * TILE_SIZE;
+	const wallCtx = wallCanvas.getContext("2d");
 	for (let y = 0; y < MAP_ROWS; y++) {
 		for (let x = 0; x < MAP_COLS; x++) {
 			if (grid[y][x] === WALL) {
-				k.add([
-					k.pos(x * TILE_SIZE, y * TILE_SIZE),
-					k.rect(TILE_SIZE, TILE_SIZE),
-					k.color(40, 28, 18),
-					"wall",
-				]);
+				wallCtx.fillStyle = "#281c12";
+				wallCtx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+				wallCtx.strokeStyle = "#1e1409";
+				wallCtx.lineWidth = 0.5;
+				wallCtx.strokeRect(x * TILE_SIZE + 0.5, y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
 			}
 		}
 	}
+	const wallTag = "wallbg_" + Date.now();
+	k.loadSprite(wallTag, wallCanvas.toDataURL());
+	k.onLoad(() => {
+		k.add([
+			k.pos(0, 0),
+			k.sprite(wallTag),
+			k.z(-1),
+		]);
+	});
 
 	const doug = k.add([
 		k.pos(
@@ -129,6 +154,39 @@ k.scene("game", (levelIdx) => {
 		k.area(),
 		player(k, grid, TILE_SIZE),
 	]);
+
+	// Notifications & kill tracker
+	const notifs = createNotifications(k);
+
+	const killTracker = {};
+	for (const entry of levelDef.enemies) {
+		const name = entry.type.name || "Enemy";
+		if (!killTracker[name]) {
+			killTracker[name] = { total: 0, killed: 0 };
+		}
+		killTracker[name].total += entry.count;
+	}
+
+	function getTrackerText() {
+		const lines = [];
+		for (const [name, data] of Object.entries(killTracker)) {
+			lines.push(`${data.killed}/${data.total} ${name}s Killed`);
+		}
+		return lines.join("\n");
+	}
+
+	const trackerLabel = k.add([
+		k.text(getTrackerText(), { size: 14 }),
+		k.pos(k.width() - 10, 10),
+		k.anchor("topright"),
+		k.color(200, 200, 200),
+		k.fixed(),
+		k.z(100),
+	]);
+
+	doug.on("damaged", (amount) => {
+		notifs.show(`Took ${amount} damage!`, [255, 80, 80]);
+	});
 
 	const enemiesToSpawn = [];
 	for (const entry of levelDef.enemies) {
@@ -147,7 +205,7 @@ k.scene("game", (levelIdx) => {
 		const h = type.height || 16;
 		const sc = type.spriteScale || 0.28;
 
-		k.add([
+		const enemyObj = k.add([
 			k.pos(
 				room.cx * TILE_SIZE + TILE_SIZE / 2,
 				room.cy * TILE_SIZE + TILE_SIZE / 2,
@@ -160,6 +218,15 @@ k.scene("game", (levelIdx) => {
 			enemy(k, doug, grid, TILE_SIZE, type),
 			"enemy",
 		]);
+
+		enemyObj.on("killed", () => {
+			const name = enemyObj.typeName || "Enemy";
+			if (killTracker[name]) {
+				killTracker[name].killed++;
+			}
+			trackerLabel.text = getTrackerText();
+			notifs.show(`Killed a ${name}!`, [255, 220, 100]);
+		});
 	}
 
 	// Level label
