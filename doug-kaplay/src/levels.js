@@ -60,8 +60,8 @@ const LEVELS = [
 		isBossLevel: true,
 		enemies: [
 			{ type: ENEMY_TYPES.gigaSpider, count: 1 },
-			{ type: ENEMY_TYPES.spider, count: 2 },
-			{ type: ENEMY_TYPES.phaser, count: 3 },
+			{ type: ENEMY_TYPES.spider, count: 4  },
+			{ type: ENEMY_TYPES.phaser, count: 7 },
 		],
 	},
 ];
