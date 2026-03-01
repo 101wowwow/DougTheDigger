@@ -7,7 +7,7 @@ const LEVELS = [
 
 	{
 		name: "Level 1",
-		description: "Level 1. You battle Red Soldiers, remains of the War, below the surface. \n Slow, but medium strength. Or, so you think. \nYou'll have to hunt down the enemies, before they hunt you down. Use the terrain to your advantage - make them get stuck before the end \nArrow Keys to move, space to attack",
+		description: "Level 1. You battle Red Soldiers, remains of the War, below the surface. \n Slow, but medium strength. Or, so you think. \nYou'll have to hunt down the enemies, before they hunt you down. Use the terrain to your advantage - make them get stuck before the end. Defeat all the enemies - then head Up towards the Surface, to find the Gateway. The Gateway is gray when inactivated, and purple when you can use it to teleport to the next level.\nArrow Keys to move, space to attack",
 		enemies: [
 			{ type: ENEMY_TYPES.red, count: 4 },
 		],

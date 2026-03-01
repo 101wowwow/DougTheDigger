@@ -252,12 +252,23 @@ k.scene("game", (levelIdx) => {
 	}
 
 	// Level label
-	k.add([
+	const levelLabel = k.add([
 		k.text(levelDef.name, { size: 16 }),
 		k.pos(10, 10),
 		k.color(255, 220, 150),
 		k.fixed(),
 		k.z(100),
+	]);
+
+	// Gateway HUD label (hidden until activated)
+	const gatewayHud = k.add([
+		k.text("Gateway Activated", { size: 14 }),
+		k.pos(10, 10),
+		k.anchor("topleft"),
+		k.color(160, 0, 255),
+		k.fixed(),
+		k.z(100),
+		k.opacity(0),
 	]);
 
 	doug.onUpdate(() => {
@@ -297,13 +308,23 @@ k.scene("game", (levelIdx) => {
 	let gatewayActive = false;
 
 	// Check if all enemies are dead → activate the gateway
+	let flashTimer = 0;
 	k.onUpdate(() => {
-		if (gatewayActive) return;
-		if (k.get("enemy").length === 0) {
+		if (!gatewayActive && k.get("enemy").length === 0) {
 			gatewayActive = true;
 			gateway.color = k.rgb(160, 0, 255);
 			gatewayLabel.color = k.rgb(255, 255, 255);
 			notifs.show("Gateway activated! Find the Gateway!", [160, 0, 255]);
+
+			// Position HUD label right of the level label and show it
+			gatewayHud.pos.x = levelLabel.pos.x + levelLabel.width + 16;
+			gatewayHud.opacity = 1;
+		}
+
+		// Flash the HUD label purple
+		if (gatewayActive) {
+			flashTimer += k.dt();
+			gatewayHud.opacity = Math.abs(Math.sin(flashTimer * 4));
 		}
 	});
 
