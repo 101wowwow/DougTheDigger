@@ -208,6 +208,45 @@ function carve2x2(grid, x, y) {
 	}
 }
 
+// Wide carve for boss tunnels — radius tiles in every direction from (x, y)
+function carveWide(grid, x, y, radius) {
+	for (let dy = -radius; dy <= radius; dy++) {
+		for (let dx = -radius; dx <= radius; dx++) {
+			const ny = y + dy, nx = x + dx;
+			if (ny >= 1 && ny < grid.length - 1 && nx >= 1 && nx < grid[0].length - 1) {
+				grid[ny][nx] = FLOOR;
+			}
+		}
+	}
+}
+
+function drunkWalkWide(grid, x, y, tx, ty, wander, radius) {
+	const maxSteps = (Math.abs(tx - x) + Math.abs(ty - y)) * 5;
+	for (let step = 0; step < maxSteps && (x !== tx || y !== ty); step++) {
+		carveWide(grid, x, y, radius);
+
+		if (Math.random() < wander) {
+			const dir = Math.floor(Math.random() * 4);
+			const nx = x + [1, -1, 0, 0][dir];
+			const ny = y + [0, 0, 1, -1][dir];
+			if (nx >= radius + 1 && nx < grid[0].length - radius - 1 &&
+				ny >= radius + 1 && ny < grid.length - radius - 1) {
+				x = nx;
+				y = ny;
+			}
+		} else {
+			const dx = tx - x;
+			const dy = ty - y;
+			if (Math.abs(dx) >= Math.abs(dy)) {
+				x += Math.sign(dx);
+			} else {
+				y += Math.sign(dy);
+			}
+		}
+	}
+	carveWide(grid, x, y, radius);
+}
+
 // Boss-level map: large arena in the centre with tunnels radiating outward.
 // The arena is big enough for the Giga Spider to roam freely.
 export function generateBossMap(cols, rows) {
@@ -262,16 +301,18 @@ export function generateBossMap(cols, rows) {
 		rooms.push({ cx, cy, rx, ry });
 	}
 
-	// Connect every side room to the arena with winding tunnels
+	// Connect every side room to the arena with wide tunnels (radius 3 = ~7 tiles wide)
+	// so the Giga Spider can fit through every passage
+	const BOSS_TUNNEL_RADIUS = 3;
 	for (let i = 1; i < rooms.length; i++) {
-		drunkWalk(grid, rooms[i].cx, rooms[i].cy, arenaCx, arenaCy, 0.3);
+		drunkWalkWide(grid, rooms[i].cx, rooms[i].cy, arenaCx, arenaCy, 0.3, BOSS_TUNNEL_RADIUS);
 	}
 	// Cross-connect some side rooms
 	for (let i = 1; i < rooms.length - 1; i += 2) {
-		drunkWalk(grid, rooms[i].cx, rooms[i].cy, rooms[i + 1].cx, rooms[i + 1].cy, 0.35);
+		drunkWalkWide(grid, rooms[i].cx, rooms[i].cy, rooms[i + 1].cx, rooms[i + 1].cy, 0.35, BOSS_TUNNEL_RADIUS);
 	}
 
-	// Branch dead-end tunnels
+	// Branch dead-end tunnels (also wide)
 	const floorTiles = [];
 	for (let y = 2; y < rows - 2; y++) {
 		for (let x = 2; x < cols - 2; x++) {
@@ -285,7 +326,7 @@ export function generateBossMap(cols, rows) {
 		const dist = randInt(15, 30);
 		const tx = Math.max(2, Math.min(cols - 3, Math.round(start.x + Math.cos(angle) * dist)));
 		const ty = Math.max(2, Math.min(rows - 3, Math.round(start.y + Math.sin(angle) * dist)));
-		drunkWalk(grid, start.x, start.y, tx, ty, 0.4);
+		drunkWalkWide(grid, start.x, start.y, tx, ty, 0.4, BOSS_TUNNEL_RADIUS);
 	}
 
 	// Smoothing
