@@ -214,6 +214,7 @@ k.scene("game", (levelIdx) => {
 	);
 	const MIN_SPAWN_DIST = 100;
 	const availableRooms = rooms.slice(1).filter((r) => {
+		if (r.cx === gatewayStart.x && r.cy === gatewayStart.y) return false;
 		const rx = r.cx * TILE_SIZE + TILE_SIZE / 2;
 		const ry = r.cy * TILE_SIZE + TILE_SIZE / 2;
 		return playerPx.dist(k.vec2(rx, ry)) >= MIN_SPAWN_DIST;
