@@ -40,10 +40,42 @@ k.scene("home", () => {
 		k.area(),
 	]);
 
-	btn.onClick(() => k.go("game", 0));
+	btn.onClick(() => k.go("levelintro", 0));
 
 	k.onKeyPress("space", () => {
-		k.go("game", 0);
+		k.go("levelintro", 0);
+	});
+});
+
+k.scene("levelintro", (levelIdx) => {
+	const levelDef = LEVELS[levelIdx];
+	k.camPos(k.center());
+
+	k.add([
+		k.text(levelDef.name, { size: 48 }),
+		k.pos(k.center().x, k.center().y - 60),
+		k.anchor("center"),
+		k.color(255, 220, 150),
+	]);
+
+	if (levelDef.description) {
+		k.add([
+			k.text(levelDef.description, { size: 18, width: 500 }),
+			k.pos(k.center().x, k.center().y + 10),
+			k.anchor("center"),
+			k.color(200, 200, 200),
+		]);
+	}
+
+	k.add([
+		k.text("Press SPACE to begin", { size: 16 }),
+		k.pos(k.center().x, k.center().y + 100),
+		k.anchor("center"),
+		k.color(150, 150, 150),
+	]);
+
+	k.onKeyPress("space", () => {
+		k.go("game", levelIdx);
 	});
 });
 
@@ -127,7 +159,7 @@ k.scene("game", (levelIdx) => {
 		if (k.get("enemy").length === 0) {
 			levelCleared = true;
 			if (levelIdx + 1 < LEVELS.length) {
-				k.go("game", levelIdx + 1);
+				k.go("levelintro", levelIdx + 1);
 			} else {
 				k.go("win");
 			}
@@ -179,7 +211,7 @@ k.scene("gameover", () => {
 	]);
 
 	k.onKeyPress("space", () => {
-		k.go("game", 0);
+		k.go("levelintro", 0);
 	});
 });
 
