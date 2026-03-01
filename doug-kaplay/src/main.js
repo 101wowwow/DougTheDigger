@@ -1,7 +1,7 @@
 import kaplay from "kaplay";
 import player from "./player.js";
 import enemy, { ENEMY_TYPES } from "./enemy.js";
-import generateMap, { WALL } from "./mapGen.js";
+import generateMap, { WALL, FLOOR, generateBossMap } from "./mapGen.js";
 import LEVELS from "./levels.js";
 import scrollingText from "./scrollingText.js";
 import createNotifications from "./notifications.js";
@@ -21,6 +21,7 @@ k.loadSprite("bean", "sprites/bean.png");
 k.loadSprite("spider", "sprites/spider.png");
 k.loadSprite("goofybigtext", "sprites/eviltextbadtest.png")
 k.loadSprite("doug", "sprites/doug.png")
+k.loadSprite("powerup", "sprites/powerup.png")
 
 k.scene("home", () => {
 	k.camPos(k.center());
@@ -96,7 +97,7 @@ k.scene("levelintro", (levelIdx) => {
 
 	k.add([
 		k.text(levelDef.name, { size: 48 }),
-		k.pos(k.center().x, k.center().y - 60),
+		k.pos(k.center().x, k.center().y - 130),
 		k.anchor("center"),
 		k.color(255, 220, 150),
 	]);
@@ -104,7 +105,7 @@ k.scene("levelintro", (levelIdx) => {
 	if (levelDef.description) {
 		k.add([
 			k.text("", { size: 18, width: 500 }),
-			k.pos(k.center().x, k.center().y + 10),
+			k.pos(k.center().x, k.center().y + 20),
 			k.anchor("center"),
 			k.color(200, 200, 200),
 			scrollingText(k, {
@@ -116,7 +117,7 @@ k.scene("levelintro", (levelIdx) => {
 
 	k.add([
 		k.text("Press ENTER to begin | SPACE to attack", { size: 16 }),
-		k.pos(k.center().x, k.center().y + 100),
+		k.pos(k.center().x, k.center().y + 130),
 		k.anchor("center"),
 		k.color(150, 150, 150),
 	]);
@@ -128,28 +129,39 @@ k.scene("levelintro", (levelIdx) => {
 
 k.scene("game", (levelIdx) => {
 	const levelDef = LEVELS[levelIdx];
-	const { grid, rooms, playerStart, gatewayStart } = generateMap(MAP_COLS, MAP_ROWS);
+	const isBoss = !!levelDef.isBossLevel;
+	const mapData = isBoss
+		? generateBossMap(MAP_COLS, MAP_ROWS)
+		: generateMap(MAP_COLS, MAP_ROWS);
+	const { grid, rooms, playerStart, gatewayStart } = mapData;
 
 	// Pre-render all walls into a single background image for performance
 	const wallCanvas = document.createElement("canvas");
 	wallCanvas.width = MAP_COLS * TILE_SIZE;
 	wallCanvas.height = MAP_ROWS * TILE_SIZE;
 	const wallCtx = wallCanvas.getContext("2d");
-	for (let y = 0; y < MAP_ROWS; y++) {
-		for (let x = 0; x < MAP_COLS; x++) {
-			if (grid[y][x] === WALL) {
-				wallCtx.fillStyle = "#281c12";
-				wallCtx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-				wallCtx.strokeStyle = "#1e1409";
-				wallCtx.lineWidth = 0.5;
-				wallCtx.strokeRect(x * TILE_SIZE + 0.5, y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+
+	function paintWalls() {
+		wallCtx.clearRect(0, 0, wallCanvas.width, wallCanvas.height);
+		for (let y = 0; y < MAP_ROWS; y++) {
+			for (let x = 0; x < MAP_COLS; x++) {
+				if (grid[y][x] === WALL) {
+					wallCtx.fillStyle = "#281c12";
+					wallCtx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+					wallCtx.strokeStyle = "#1e1409";
+					wallCtx.lineWidth = 0.5;
+					wallCtx.strokeRect(x * TILE_SIZE + 0.5, y * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+				}
 			}
 		}
 	}
+	paintWalls();
+
 	const wallTag = "wallbg_" + Date.now();
+	let wallBgObj = null;
 	k.loadSprite(wallTag, wallCanvas.toDataURL());
 	k.onLoad(() => {
-		k.add([
+		wallBgObj = k.add([
 			k.pos(0, 0),
 			k.sprite(wallTag),
 			k.z(-1),
@@ -219,9 +231,23 @@ k.scene("game", (levelIdx) => {
 		const ry = r.cy * TILE_SIZE + TILE_SIZE / 2;
 		return playerPx.dist(k.vec2(rx, ry)) >= MIN_SPAWN_DIST;
 	});
+
+	let bossObj = null;
+
 	for (let i = 0; i < enemiesToSpawn.length; i++) {
-		const room = availableRooms[i % availableRooms.length];
 		const type = enemiesToSpawn[i];
+		const isBossEnemy = !!type.isBoss;
+
+		// Boss enemies spawn at the designated boss position; others in rooms
+		let spawnX, spawnY;
+		if (isBossEnemy && isBoss && mapData.bossSpawn) {
+			spawnX = mapData.bossSpawn.x * TILE_SIZE + TILE_SIZE / 2;
+			spawnY = mapData.bossSpawn.y * TILE_SIZE + TILE_SIZE / 2;
+		} else {
+			const room = availableRooms[i % availableRooms.length];
+			spawnX = room.cx * TILE_SIZE + TILE_SIZE / 2;
+			spawnY = room.cy * TILE_SIZE + TILE_SIZE / 2;
+		}
 
 		const spriteName = type.sprite || "bean";
 		const w = type.width || 16;
@@ -229,10 +255,7 @@ k.scene("game", (levelIdx) => {
 		const sc = type.spriteScale || 0.28;
 
 		const enemyObj = k.add([
-			k.pos(
-				room.cx * TILE_SIZE + TILE_SIZE / 2,
-				room.cy * TILE_SIZE + TILE_SIZE / 2,
-			),
+			k.pos(spawnX, spawnY),
 			k.sprite(spriteName),
 			k.scale(sc),
 			k.anchor("center"),
@@ -242,6 +265,8 @@ k.scene("game", (levelIdx) => {
 			"enemy",
 		]);
 
+		if (isBossEnemy) bossObj = enemyObj;
+
 		enemyObj.on("killed", () => {
 			const name = enemyObj.typeName || "Enemy";
 			if (killTracker[name]) {
@@ -250,6 +275,263 @@ k.scene("game", (levelIdx) => {
 			trackerLabel.text = getTrackerText();
 			notifs.show(`Killed a ${name}!`, [255, 220, 100]);
 		});
+	}
+
+	// ── Boss-level systems ──────────────────────────────────────────
+	let hasKaboom = false;
+	let kaboomCharges = 0;
+	const KABOOM_MAX_CHARGES = 5;
+	const SHATTER_RADIUS = 6;
+	const DEBRIS_DAMAGE = 150;
+
+	// Boss health bar (top of screen, only on boss levels)
+	let bossBarBg = null;
+	let bossBar = null;
+	let bossNameLabel = null;
+	const BOSS_BAR_W = 300;
+	const BOSS_BAR_H = 10;
+
+	if (isBoss && bossObj) {
+		bossNameLabel = k.add([
+			k.text("Giga Steampunk Spider", { size: 12 }),
+			k.pos(k.width() / 2, 26),
+			k.anchor("center"),
+			k.color(255, 80, 80),
+			k.fixed(),
+			k.z(100),
+		]);
+		bossBarBg = k.add([
+			k.rect(BOSS_BAR_W, BOSS_BAR_H),
+			k.pos(k.width() / 2 - BOSS_BAR_W / 2, 36),
+			k.color(60, 60, 60),
+			k.fixed(),
+			k.z(100),
+		]);
+		bossBar = k.add([
+			k.rect(BOSS_BAR_W, BOSS_BAR_H),
+			k.pos(k.width() / 2 - BOSS_BAR_W / 2, 36),
+			k.color(255, 40, 40),
+			k.fixed(),
+			k.z(101),
+		]);
+	}
+
+	// Update boss health bar each frame
+	if (isBoss && bossObj) {
+		k.onUpdate(() => {
+			if (bossObj && bossObj.exists() && bossBar) {
+				const ratio = Math.max(0, bossObj.getHealth() / bossObj.getMaxHealth());
+				bossBar.width = BOSS_BAR_W * ratio;
+			} else if (bossBar && bossBar.exists()) {
+				bossBar.width = 0;
+			}
+		});
+	}
+
+	// Powerup pickup (boss levels only)
+	if (isBoss && mapData.powerupSpawn) {
+		const puX = mapData.powerupSpawn.x * TILE_SIZE + TILE_SIZE / 2;
+		const puY = mapData.powerupSpawn.y * TILE_SIZE + TILE_SIZE / 2;
+
+		const powerup = k.add([
+			k.pos(puX, puY),
+			k.sprite("powerup"),
+			k.scale(0.6),
+			k.anchor("center"),
+			k.area(),
+			k.z(5),
+			"powerup",
+		]);
+
+		// Pulsing glow effect
+		let puTimer = 0;
+		powerup.onUpdate(() => {
+			puTimer += k.dt();
+			powerup.scale = k.vec2(0.6 + Math.sin(puTimer * 4) * 0.08);
+		});
+
+		const puLabel = k.add([
+			k.text("Kaboom Shot", { size: 8 }),
+			k.pos(puX, puY - 16),
+			k.anchor("center"),
+			k.color(255, 100, 100),
+			k.z(6),
+		]);
+
+		doug.onCollide("powerup", () => {
+			if (hasKaboom) return;
+			hasKaboom = true;
+			kaboomCharges = KABOOM_MAX_CHARGES;
+			powerup.destroy();
+			puLabel.destroy();
+			notifs.show("Kaboom Shot acquired! Press Q to fire upward!", [255, 80, 80]);
+			notifs.show(`${kaboomCharges} charges remaining`, [255, 160, 80]);
+		});
+	}
+
+	// Kaboom Shot HUD (shows charge count)
+	const kaboomHud = k.add([
+		k.text("", { size: 12 }),
+		k.pos(k.width() / 2, k.height() - 20),
+		k.anchor("center"),
+		k.color(255, 100, 100),
+		k.fixed(),
+		k.z(100),
+		k.opacity(0),
+	]);
+
+	if (isBoss) {
+		k.onUpdate(() => {
+			if (hasKaboom) {
+				kaboomHud.opacity = 1;
+				kaboomHud.text = `Kaboom Shot [Q] — ${kaboomCharges} charges`;
+			}
+		});
+	}
+
+	// Fire Kaboom Shot upward (Q key)
+	k.onKeyPress("q", () => {
+		if (!hasKaboom || kaboomCharges <= 0) return;
+		kaboomCharges--;
+
+		const startX = doug.pos.x;
+		const startY = doug.pos.y;
+
+		// Create the projectile
+		const projectile = k.add([
+			k.pos(startX, startY),
+			k.rect(8, 12),
+			k.anchor("center"),
+			k.color(255, 60, 20),
+			k.z(20),
+			k.opacity(1),
+		]);
+
+		// Trail particles
+		const PROJ_SPEED = 500;
+		let projAlive = true;
+		projectile.onUpdate(() => {
+			if (!projAlive) return;
+			projectile.pos.y -= PROJ_SPEED * k.dt();
+
+			// Spawn trail particle
+			const trail = k.add([
+				k.pos(projectile.pos.x + (Math.random() - 0.5) * 6, projectile.pos.y + 6),
+				k.rect(4, 4),
+				k.anchor("center"),
+				k.color(255, k.rand(100, 200), 0),
+				k.z(19),
+				k.opacity(1),
+			]);
+			let trailLife = 0;
+			trail.onUpdate(() => {
+				trailLife += k.dt();
+				trail.opacity = Math.max(0, 1 - trailLife / 0.3);
+				if (trailLife >= 0.3) trail.destroy();
+			});
+
+			// Check if we hit a wall tile
+			const tx = Math.floor(projectile.pos.x / TILE_SIZE);
+			const ty = Math.floor(projectile.pos.y / TILE_SIZE);
+			if (ty < 0 || ty >= MAP_ROWS || tx < 0 || tx >= MAP_COLS || grid[ty][tx] === WALL) {
+				projAlive = false;
+				shatterCeiling(tx, ty);
+				projectile.destroy();
+			}
+		});
+
+		k.shake(6);
+		notifs.show("Kaboom Shot fired!", [255, 120, 40]);
+	});
+
+	// Shatter ceiling: destroy wall tiles in a radius, spawn falling debris
+	function shatterCeiling(impactX, impactY) {
+		k.addKaboom(k.vec2(impactX * TILE_SIZE + TILE_SIZE / 2, impactY * TILE_SIZE + TILE_SIZE / 2));
+		k.shake(12);
+
+		const destroyedTiles = [];
+
+		for (let dy = -SHATTER_RADIUS; dy <= SHATTER_RADIUS; dy++) {
+			for (let dx = -SHATTER_RADIUS; dx <= SHATTER_RADIUS; dx++) {
+				const tx = impactX + dx;
+				const ty = impactY + dy;
+				if (tx < 1 || tx >= MAP_COLS - 1 || ty < 1 || ty >= MAP_ROWS - 1) continue;
+				if (dx * dx + dy * dy > SHATTER_RADIUS * SHATTER_RADIUS) continue;
+				if (grid[ty][tx] !== WALL) continue;
+
+				grid[ty][tx] = FLOOR;
+				destroyedTiles.push({ tx, ty });
+			}
+		}
+
+		if (destroyedTiles.length === 0) return;
+
+		// Re-render the wall background
+		paintWalls();
+		const newTag = "wallbg_" + Date.now();
+		k.loadSprite(newTag, wallCanvas.toDataURL());
+		k.onLoad(() => {
+			if (wallBgObj) wallBgObj.destroy();
+			wallBgObj = k.add([
+				k.pos(0, 0),
+				k.sprite(newTag),
+				k.z(-1),
+			]);
+		});
+
+		// Spawn falling debris chunks
+		for (const tile of destroyedTiles) {
+			// Only some tiles produce visible debris (keeps it performant)
+			if (Math.random() > 0.4) continue;
+
+			const debrisX = tile.tx * TILE_SIZE + TILE_SIZE / 2 + (Math.random() - 0.5) * 8;
+			const debrisStartY = tile.ty * TILE_SIZE + TILE_SIZE / 2;
+			const size = k.rand(6, 14);
+
+			const debris = k.add([
+				k.pos(debrisX, debrisStartY),
+				k.rect(size, size),
+				k.anchor("center"),
+				k.color(k.rand(30, 60), k.rand(20, 40), k.rand(10, 25)),
+				k.area({ shape: new k.Rect(k.vec2(0), size, size) }),
+				k.z(15),
+				"debris",
+			]);
+
+			const fallSpeed = k.rand(200, 400);
+			const delay = Math.random() * 0.3;
+			let elapsed = 0;
+			let hasDamagedBoss = false;
+
+			debris.onUpdate(() => {
+				elapsed += k.dt();
+				if (elapsed < delay) return;
+				debris.pos.y += fallSpeed * k.dt();
+
+				// Check if we hit a wall below (stopped falling)
+				const dty = Math.floor(debris.pos.y / TILE_SIZE);
+				const dtx = Math.floor(debris.pos.x / TILE_SIZE);
+				if (dty >= MAP_ROWS - 1 || (dty >= 0 && dtx >= 0 && dtx < MAP_COLS && grid[dty][dtx] === WALL)) {
+					debris.destroy();
+					return;
+				}
+
+				// Damage boss if debris hits it
+				if (!hasDamagedBoss && bossObj && bossObj.exists()) {
+					if (debris.pos.dist(bossObj.pos) < 50) {
+						hasDamagedBoss = true;
+						bossObj.damage(DEBRIS_DAMAGE);
+						k.addKaboom(debris.pos, { scale: 0.3 });
+						debris.destroy();
+					}
+				}
+
+				// Debris falls off screen
+				if (debris.pos.y > MAP_ROWS * TILE_SIZE) {
+					debris.destroy();
+				}
+			});
+		}
 	}
 
 	// Level label

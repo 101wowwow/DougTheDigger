@@ -208,6 +208,126 @@ function carve2x2(grid, x, y) {
 	}
 }
 
+// Boss-level map: large arena in the centre with tunnels radiating outward.
+// The arena is big enough for the Giga Spider to roam freely.
+export function generateBossMap(cols, rows) {
+	const grid = [];
+	for (let y = 0; y < rows; y++) {
+		grid[y] = new Array(cols).fill(WALL);
+	}
+
+	const rooms = [];
+
+	// --- Giant arena in the centre ---
+	const arenaRx = 22;
+	const arenaRy = 18;
+	const arenaCx = Math.floor(cols / 2);
+	const arenaCy = Math.floor(rows / 2);
+
+	for (let y = arenaCy - arenaRy; y <= arenaCy + arenaRy; y++) {
+		for (let x = arenaCx - arenaRx; x <= arenaCx + arenaRx; x++) {
+			if (y < 1 || y >= rows - 1 || x < 1 || x >= cols - 1) continue;
+			const dx = (x - arenaCx) / arenaRx;
+			const dy = (y - arenaCy) / arenaRy;
+			const noise = Math.random() * 0.25 - 0.1;
+			if (dx * dx + dy * dy <= 1.0 + noise) {
+				grid[y][x] = FLOOR;
+			}
+		}
+	}
+	rooms.push({ cx: arenaCx, cy: arenaCy, rx: arenaRx, ry: arenaRy });
+
+	// --- Smaller side rooms ---
+	const sideRoomDefs = [
+		{ cx: arenaCx - 35, cy: arenaCy - 15 },
+		{ cx: arenaCx + 35, cy: arenaCy - 15 },
+		{ cx: arenaCx - 35, cy: arenaCy + 15 },
+		{ cx: arenaCx + 35, cy: arenaCy + 15 },
+		{ cx: arenaCx, cy: arenaCy - 30 },
+		{ cx: arenaCx, cy: arenaCy + 30 },
+	];
+	for (const def of sideRoomDefs) {
+		const rx = randInt(5, 8);
+		const ry = randInt(4, 6);
+		const cx = Math.max(rx + 2, Math.min(cols - rx - 2, def.cx));
+		const cy = Math.max(ry + 2, Math.min(rows - ry - 2, def.cy));
+		for (let y = cy - ry; y <= cy + ry; y++) {
+			for (let x = cx - rx; x <= cx + rx; x++) {
+				if (y < 1 || y >= rows - 1 || x < 1 || x >= cols - 1) continue;
+				const ddx = (x - cx) / rx;
+				const ddy = (y - cy) / ry;
+				if (ddx * ddx + ddy * ddy <= 1.0) grid[y][x] = FLOOR;
+			}
+		}
+		rooms.push({ cx, cy, rx, ry });
+	}
+
+	// Connect every side room to the arena with winding tunnels
+	for (let i = 1; i < rooms.length; i++) {
+		drunkWalk(grid, rooms[i].cx, rooms[i].cy, arenaCx, arenaCy, 0.3);
+	}
+	// Cross-connect some side rooms
+	for (let i = 1; i < rooms.length - 1; i += 2) {
+		drunkWalk(grid, rooms[i].cx, rooms[i].cy, rooms[i + 1].cx, rooms[i + 1].cy, 0.35);
+	}
+
+	// Branch dead-end tunnels
+	const floorTiles = [];
+	for (let y = 2; y < rows - 2; y++) {
+		for (let x = 2; x < cols - 2; x++) {
+			if (grid[y][x] === FLOOR) floorTiles.push({ x, y });
+		}
+	}
+	for (let i = 0; i < 6; i++) {
+		if (floorTiles.length === 0) break;
+		const start = floorTiles[randInt(0, floorTiles.length)];
+		const angle = Math.random() * Math.PI * 2;
+		const dist = randInt(15, 30);
+		const tx = Math.max(2, Math.min(cols - 3, Math.round(start.x + Math.cos(angle) * dist)));
+		const ty = Math.max(2, Math.min(rows - 3, Math.round(start.y + Math.sin(angle) * dist)));
+		drunkWalk(grid, start.x, start.y, tx, ty, 0.4);
+	}
+
+	// Smoothing
+	for (let pass = 0; pass < 3; pass++) {
+		const snap = grid.map(row => [...row]);
+		for (let y = 1; y < rows - 1; y++) {
+			for (let x = 1; x < cols - 1; x++) {
+				if (snap[y][x] !== WALL) continue;
+				let floorN = 0;
+				for (let dy = -1; dy <= 1; dy++) {
+					for (let dx = -1; dx <= 1; dx++) {
+						if (dx === 0 && dy === 0) continue;
+						if (snap[y + dy][x + dx] === FLOOR) floorN++;
+					}
+				}
+				if (floorN >= 4 && Math.random() < 0.5) grid[y][x] = FLOOR;
+			}
+		}
+	}
+
+	// Player starts in a bottom side room, gateway in a top side room
+	const bottomRooms = rooms.slice(1).filter(r => r.cy > arenaCy);
+	const topRooms = rooms.slice(1).filter(r => r.cy < arenaCy);
+	const playerRoom = bottomRooms.length > 0 ? bottomRooms[0] : rooms[1];
+	const gatewayRoom = topRooms.length > 0 ? topRooms[0] : rooms[rooms.length - 1];
+
+	// Powerup spawns in a side room opposite the player
+	const powerupCandidates = rooms.slice(1).filter(r => r !== playerRoom && r !== gatewayRoom);
+	const powerupRoom = powerupCandidates.length > 0
+		? powerupCandidates[Math.floor(Math.random() * powerupCandidates.length)]
+		: rooms[1];
+
+	return {
+		grid,
+		rooms,
+		playerStart: { x: playerRoom.cx, y: playerRoom.cy },
+		gatewayStart: { x: gatewayRoom.cx, y: gatewayRoom.cy },
+		bossSpawn: { x: arenaCx, y: arenaCy },
+		powerupSpawn: { x: powerupRoom.cx, y: powerupRoom.cy },
+	};
+}
+
 function randInt(min, max) {
 	return Math.floor(Math.random() * (max - min)) + min;
 }

@@ -171,6 +171,23 @@ export const ENEMY_TYPES = {
         height: 5,
     },
 
+	gigaSpider: {
+		name: "Giga Steampunk Spider",
+		speed: 90,
+		health: 600,
+		attackDamage: 30,
+		attackCooldown: 1,
+		phaseThrough: false,
+		smartPathing: true,
+		triggerRadius: Infinity,
+		sprite: "spider",
+		spriteScale: 0.7,
+		tint: [255, 80, 80],
+		width: 60,
+		height: 60,
+		isBoss: true,
+	},
+
 
     // issues
     // soldier: {
@@ -215,7 +232,11 @@ export default function enemy(k, target, grid, tileSize, opts = {}) {
 	return {
 		id: "enemy",
 		typeName: cfg.name,
+		isBoss: !!cfg.isBoss,
 		require: ["area", "pos", "color"],
+
+		getHealth() { return health; },
+		getMaxHealth() { return cfg.health; },
 
 		damage(amount) {
 			health -= amount;
@@ -227,7 +248,8 @@ export default function enemy(k, target, grid, tileSize, opts = {}) {
 
 			if (health <= 0) {
 				this.trigger("killed");
-				k.addKaboom(this.pos, { scale: 0.5 });
+				k.addKaboom(this.pos, { scale: cfg.isBoss ? 2 : 0.5 });
+				if (cfg.isBoss) k.shake(20);
 				this.destroy();
 			}
 		},
