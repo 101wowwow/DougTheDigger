@@ -56,7 +56,7 @@ const LEVELS = [
 	},
 	{
 		name: "Level 6 — BOSS",
-		description: "Help, there is  a GIANT gigaspider! Uh oh",
+		description: "Help, there is  a GIANT gigaspider! Uh oh. Its weak spot? Between the legs. If you can live long enough to get there, that is.",
 		isBossLevel: true,
 		enemies: [
 			{ type: ENEMY_TYPES.gigaSpider, count: 1 },
