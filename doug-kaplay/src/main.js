@@ -499,8 +499,38 @@ k.scene("game", (levelIdx) => {
 		k.opacity(0),
 	]);
 
+	// Attack cooldown HUD (lower-left)
+	const CD_BAR_W = 60;
+	const CD_BAR_H = 8;
+	const cdLabel = k.add([
+		k.text("ATK", { size: 12 }),
+		k.pos(10, k.height() - 26),
+		k.color(200, 200, 200),
+		k.fixed(),
+		k.z(100),
+	]);
+	const cdBarBg = k.add([
+		k.rect(CD_BAR_W, CD_BAR_H),
+		k.pos(40, k.height() - 24),
+		k.color(60, 60, 60),
+		k.fixed(),
+		k.z(100),
+	]);
+	const cdBar = k.add([
+		k.rect(CD_BAR_W, CD_BAR_H),
+		k.pos(40, k.height() - 24),
+		k.color(100, 255, 100),
+		k.fixed(),
+		k.z(101),
+	]);
+
 	doug.onUpdate(() => {
 		k.camPos(doug.pos);
+
+		// Update cooldown bar
+		const frac = doug.attackCooldownFraction();
+		cdBar.width = CD_BAR_W * (1 - frac);
+		cdBar.color = frac > 0 ? k.rgb(255, 80, 80) : k.rgb(100, 255, 100);
 	});
 
 	k.onKeyPress("space", () => {

@@ -16,8 +16,8 @@ const LEVELS = [
 		name: "Level 2",
 		description: "Level 2. There are Cowardly Soldiers too. You must hunt them down - they won't come for you unless you are close... ",
 		enemies: [
-			{ type: ENEMY_TYPES.red, count: 2 },
-			{ type: ENEMY_TYPES.coward, count: 4 },
+			{ type: ENEMY_TYPES.red, count: 3 },
+			{ type: ENEMY_TYPES.coward, count: 3 },
 		],
 	},
 	{

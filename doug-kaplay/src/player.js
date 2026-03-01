@@ -2,6 +2,7 @@ import { WALL } from "./mapGen.js";
 
 const SPEED = 220;
 const MAX_HEALTH = 100;
+const ATTACK_COOLDOWN = 0.5; // seconds between attacks
 const COLLISION_HALF = 8; // half-size of the player's collision box (16×16 px)
 const BAR_WIDTH = 30;
 const BAR_HEIGHT = 4;
@@ -12,6 +13,7 @@ export default function player(k, mapGrid, tileSize) {
 	let isHit = false;
 	let healthBar = null;
 	let healthBarBg = null;
+	let attackCooldown = 0;
 
 	// Check if a position would put any corner of the collision box inside a wall
 	function hitsWall(cx, cy) {
@@ -77,6 +79,9 @@ export default function player(k, mapGrid, tileSize) {
 		},
 
 		attack() {
+			if (attackCooldown > 0) return;
+			attackCooldown = ATTACK_COOLDOWN;
+
 			k.addKaboom(this.pos, { scale: 0.5 });
 			k.shake(4);
 
@@ -86,6 +91,10 @@ export default function player(k, mapGrid, tileSize) {
 					e.damage(20);
 				}
 			}
+		},
+
+		attackCooldownFraction() {
+			return Math.max(0, attackCooldown / ATTACK_COOLDOWN);
 		},
 
 		add() {
@@ -105,6 +114,8 @@ export default function player(k, mapGrid, tileSize) {
 		},
 
 		update() {
+			if (attackCooldown > 0) attackCooldown -= k.dt();
+
 			let dx = 0, dy = 0;
 			if (k.isKeyDown(["left", "a"])) dx = -SPEED;
 			if (k.isKeyDown(["right", "d"])) dx = SPEED;
